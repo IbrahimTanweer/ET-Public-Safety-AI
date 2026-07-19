@@ -1,5 +1,6 @@
 from database.neo4j_db import get_driver
 from models.graph import RiskResponse
+import math
 
 class RiskEngine:
     def __init__(self):
@@ -7,93 +8,99 @@ class RiskEngine:
 
     def compute_risk_score(self, complaint_id: str, connected_complaints: list = None) -> RiskResponse:
         """
-        Combines graph evidence (like number of connected complaints and blacklists) into a fraud confidence score.
-        """
-        # Query Neo4j to find linked entities of the complaint
-        query_entities = """
-        MATCH (c:Complaint {id: $complaint_id})-[:HAS_PHONE|HAS_UPI|HAS_WEBSITE]->(entity)
-        RETURN labels(entity)[0] AS type, 
-               entity.number AS phone, 
-               entity.id AS upi, 
-               entity.url AS website
+        Computes an advanced risk score by analyzing entity-specific weights, 
+        network overlaps via non-linear scaling, and active threat intelligence signals.
         """
         
-        entities_to_check = []
+        # 1. Single-pass Cypher query capturing the entire local graph context
+        advanced_query = """
+        MATCH (c:Complaint {id: $complaint_id})
+        
+        // Find entities directly connected to this complaint
+        MATCH (c)-[r:HAS_PHONE|HAS_UPI|HAS_WEBSITE]->(e)
+        
+        OPTIONAL MATCH (other:Complaint)-[:HAS_PHONE|HAS_UPI|HAS_WEBSITE]->(e)
+        WHERE other.id <> c.id
+        
+        WITH e, type(r) AS rel_type, count(distinct other) AS entity_overlap_count,
+             e.is_blacklisted AS blacklisted, e.threat_source AS source
+        
+        RETURN 
+            collect({
+                entity_type: labels(e)[0],
+                relationship: rel_type,
+                overlap_count: entity_overlap_count,
+                is_blacklisted: coalesce(blacklisted, false),
+                threat_source: source
+            }) AS network_profile
+        """
+
         with self.driver.session() as session:
-            result = session.run(query_entities, complaint_id=complaint_id)
-            for record in result:
-                t = record["type"]
-                if t == "Phone":
-                    entities_to_check.append((t, record["phone"]))
-                elif t == "UPI":
-                    entities_to_check.append((t, record["upi"]))
-                elif t == "Website":
-                    entities_to_check.append((t, record["website"]))
-                    
-        # Now count overlaps for these entities and see if they are blacklisted
-        overlapping_complaints = set()
-        blacklist_factors = []
-        
-        for t, val in entities_to_check:
-            if not val:
-                continue
-            # 1. Overlaps
-            q_overlap = """
-            MATCH (c:Complaint)-[:HAS_PHONE|HAS_UPI|HAS_WEBSITE]->(n)
-            WHERE (n:Phone AND n.number = $val) 
-               OR (n:UPI AND n.id = $val)
-               OR (n:Website AND n.url = $val)
-            RETURN c.id AS comp_id
-            """
-            with self.driver.session() as session:
-                res = session.run(q_overlap, val=val)
-                for rec in res:
-                    c_id = rec["comp_id"]
-                    if c_id != complaint_id:
-                        overlapping_complaints.add(c_id)
-            
-            # 2. Blacklist check
-            q_black = """
-            MATCH (n) WHERE (n:Phone AND n.number = $val) 
-                         OR (n:UPI AND n.id = $val)
-                         OR (n:Website AND n.url = $val)
-            RETURN n.is_blacklisted AS is_blacklisted, n.threat_source AS source
-            """
-            with self.driver.session() as session:
-                res = session.run(q_black, val=val)
-                for rec in res:
-                    if rec.get("is_blacklisted"):
-                        blacklist_factors.append(f"Blacklisted {t} ID: '{val}' ({rec.get('source')})")
-                        
-        num_connections = len(overlapping_complaints)
-        
-        # Calculate Risk Score
-        score = 15.0  # Base score for isolated complaint
+            result = session.run(advanced_query, complaint_id=complaint_id)
+            record = result.single()
+            network_profile = record["network_profile"] if record else []
+
+        # 2. Advanced Risk Metrics Definition
+        base_score = 10.0
+        weighted_overlap_score = 0.0
+        blacklist_score = 0.0
         factors = []
         
-        if num_connections > 0:
-            score += min(num_connections * 15.0, 50.0)  # up to 50% for overlaps
-            factors.append(f"Linked to {num_connections} other complaints through shared entities")
+        # Define how much weight a single link carries based on entity type
+        # UPI/Websites are harder to duplicate/accidentally share than phones
+        ENTITY_SPECIFICITY_WEIGHTS = {
+            "UPI": 1.5,
+            "Website": 2.0,
+            "Phone": 1.0
+        }
+
+        # Process the network profile
+        total_overlaps = 0
+        blacklist_events = []
+
+        for item in network_profile:
+            e_type = item["entity_type"]
+            weight = ENTITY_SPECIFICITY_WEIGHTS.get(e_type, 1.0)
+            overlaps = item["overlap_count"]
             
-        if blacklist_factors:
-            score += 35.0  # 35% for blacklist indicators
-            factors.extend(blacklist_factors)
+            if overlaps > 0:
+                total_overlaps += overlaps
+                # Apply diminished returns using log scaling so massive hubs don't skew linearly
+                # log1p handles cases where overlap is 0 safely
+                weighted_overlap_score += math.log1p(overlaps) * 20.0 * weight
+                factors.append(f"Shared {e_type} linked to {overlaps} prior case(s) (Weight multiplier: {weight}x)")
             
-        # Ensure upper bound of 99.0
-        score = min(score, 99.0)
+            if item["is_blacklisted"]:
+                blacklist_events.append(item)
+                # Differentiate score penalty by target impact
+                blacklist_score += 30.0 * weight
+                factors.append(f"Threat Intelligence Match: {e_type} blacklisted via {item['threat_source']}")
+
+        # 3. Combine risk variables using a bounded logistic function or max caps
+        # Caps prevent minor overlaps from blowing past logical boundaries
+        capped_overlap = min(weighted_overlap_score, 55.0)
+        capped_blacklist = min(blacklist_score, 45.0)
         
-        # Generate percentage and explanation
+        score = base_score + capped_overlap + capped_blacklist
+        
+        # Soft limit below absolute certainty unless verified blacklists exist
+        if not blacklist_events:
+            score = min(score, 85.0) 
+        
+        score = min(round(score, 1), 99.0)
         percentage = f"{int(score)}%"
-        if score > 85:
-            explanation = f"Extremely High Risk ({percentage}) due to extensive network overlaps and active blacklisting."
-        elif score > 60:
-            explanation = f"High Risk ({percentage}) due to multiple shared entities matching existing investigations."
-        elif score > 35:
-            explanation = f"Moderate Risk ({percentage}) due to some matching entities in database."
+
+        # 4. Contextual dynamic explanations
+        if score >= 85.0:
+            explanation = f"Critical Risk Profile ({percentage}): Highly correlated fraud ring indicators with verified threat intelligence matches."
+        elif score >= 60.0:
+            explanation = f"High Risk Profile ({percentage}): Significant structural cross-linking discovered across high-specificity identifiers."
+        elif score >= 35.0:
+            explanation = f"Moderate Risk Profile ({percentage}): Minor infrastructure overlap detected. Requires standard behavioral review."
         else:
-            explanation = f"Low Risk ({percentage}) - Isolated complaint with no prior intelligence matches."
-            factors.append("No active overlaps or blacklists found in database")
-            
+            explanation = f"Low Risk Profile ({percentage}): Isolated node with negligible external graph dependencies."
+            factors.append("No actionable network overlaps detected.")
+
         return RiskResponse(
             complaint_id=complaint_id,
             risk_score=score,
