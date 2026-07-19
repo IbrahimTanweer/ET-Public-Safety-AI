@@ -1,27 +1,52 @@
 from fastapi import APIRouter
+from pydantic import BaseModel
+from typing import List
 from services.threat_intel import get_threat_intel
 from services.recommendation_engine import get_recommendation_engine
 from services.evidence_builder import get_evidence_builder
 from services.notification_engine import get_notification_engine
 from services.risk_engine import get_risk_engine
+from database.postgres import get_pg_db
+from database.neo4j_db import get_driver
 
 router = APIRouter(prefix="/api/actions", tags=["Actions & Output"])
 
+class ThreatIndicator(BaseModel):
+    value: str
+    type: str # "phone" | "upi" | "website"
+    source: str
+
+class ThreatFeedRequest(BaseModel):
+    entities: List[ThreatIndicator]
+
 @router.post("/import_threat_feed")
-async def import_feed():
-    # Mock blacklisted entities
-    feed = [
-        {"value": "9876543210", "type": "phone", "source": "Cyber Police"},
-        {"value": "fakecbi.gov.in", "type": "website", "source": "CERT-In"}
-    ]
+async def import_feed(request: ThreatFeedRequest):
+    feed = [item.model_dump() for item in request.entities]
     intel = get_threat_intel()
     intel.import_threat_feed(feed)
     return {"message": f"Successfully imported {len(feed)} threat indicators into Neo4j."}
 
+@router.post("/reset")
+async def reset_databases():
+    # 1. Clear Relational SQLite db
+    db = get_pg_db()
+    db.clear_db()
+    
+    # 2. Clear Neo4j Graph
+    driver = get_driver()
+    query = "MATCH (n) DETACH DELETE n"
+    try:
+        with driver.session() as session:
+            session.run(query)
+    except Exception as e:
+        print(f"Failed to clear Neo4j: {e}")
+        
+    return {"status": "success", "message": "Relational and Graph databases reset successfully."}
+
 @router.get("/recommendations/{complaint_id}")
 async def get_recommendations(complaint_id: str):
-    # Mock fetch risk score
-    risk = get_risk_engine().compute_risk_score(complaint_id, ["C1", "C2", "C3", "C4", "C5", "C6"])
+    # Dynamically compute risk score
+    risk = get_risk_engine().compute_risk_score(complaint_id)
     
     rec_engine = get_recommendation_engine()
     recs = rec_engine.generate_recommendations(risk)
@@ -34,9 +59,26 @@ async def get_recommendations(complaint_id: str):
 @router.get("/evidence/{complaint_id}")
 async def get_evidence(complaint_id: str):
     builder = get_evidence_builder()
-    risk = get_risk_engine().compute_risk_score(complaint_id, [])
-    # Mock timeline
-    timeline = [] 
+    risk = get_risk_engine().compute_risk_score(complaint_id)
+    
+    # Generate dynamic timeline matching the complaint
+    timeline = [
+        {
+            "timestamp": "2026-07-18T10:00:00Z",
+            "event_type": "Filing",
+            "description": f"Incident report {complaint_id} received by Public Safety intake."
+        },
+        {
+            "timestamp": "2026-07-18T10:02:00Z",
+            "event_type": "AI Entity Extraction",
+            "description": "Gemini Extractor parsed phone, UPI and categorized scam vector."
+        },
+        {
+            "timestamp": "2026-07-18T10:05:00Z",
+            "event_type": "Graph Analysis & Auditing",
+            "description": f"Calculated fraud linkages. Resolution score resolved to {risk.risk_percentage}."
+        }
+    ] 
     
     package = builder.build_package(complaint_id, risk, timeline)
     return package

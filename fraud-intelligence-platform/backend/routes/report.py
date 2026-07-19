@@ -11,15 +11,33 @@ class ReportRequest(BaseModel):
 
 @router.post("/")
 async def generate_report(request: ReportRequest):
-    # 1. Fetch risk data
-    # In a real app we'd fetch this properly, here we mock the integration
-    analyzer = get_graph_analyzer()
     engine = get_risk_engine()
     
-    network_data = analyzer.find_connected_complaints("9876543210") # Mock phone
+    # 1. Fetch phone number connected to this complaint
+    query = """
+    MATCH (c:Complaint {id: $complaint_id})-[:HAS_PHONE]->(p:Phone)
+    RETURN p.number AS phone
+    """
+    phone = None
+    try:
+        with engine.driver.session() as session:
+            result = session.run(query, complaint_id=request.complaint_id)
+            for record in result:
+                phone = record["phone"]
+                break
+    except Exception as e:
+        print(f"Failed to fetch phone number for complaint {request.complaint_id}: {e}")
+
+    # 2. Fetch network and risk data dynamically
+    analyzer = get_graph_analyzer()
+    if phone:
+        network_data = analyzer.find_connected_complaints(phone)
+    else:
+        network_data = {"nodes": [], "edges": [], "total_complaints": 0, "connected_complaints": []}
+        
     risk_data = engine.compute_risk_score(request.complaint_id, network_data.get("connected_complaints", []))
     
-    # 2. Generate Report via LLM
+    # 3. Generate Report via LLM
     generator = get_report_generator()
     report = generator.generate_investigation_report(
         complaint_id=request.complaint_id,

@@ -1,30 +1,35 @@
 import hashlib
 
+from database.neo4j_db import get_driver
+import hashlib
+
 class Deduplicator:
     def __init__(self):
-        # In memory store for mock purposes. Should be Postgres or Redis.
-        self.seen_hashes = {}  # Map: hash -> complaint_id
+        self.driver = get_driver()
 
     def is_duplicate(self, complaint_text: str) -> bool:
         """
-        Creates a hash of the complaint to detect exact or near duplicates.
+        Creates a hash of the complaint to detect duplicate.
         """
-        complaint_hash = hashlib.md5(complaint_text.encode('utf-8')).hexdigest()
-        return complaint_hash in self.seen_hashes
+        return self.get_existing_id(complaint_text) is not None
 
     def get_existing_id(self, complaint_text: str) -> str | None:
         """
         Returns the existing complaint ID if the complaint is a duplicate.
         """
         complaint_hash = hashlib.md5(complaint_text.encode('utf-8')).hexdigest()
-        return self.seen_hashes.get(complaint_hash)
+        query = "MATCH (c:Complaint {hash: $hash}) RETURN c.id AS complaint_id"
+        with self.driver.session() as session:
+            result = session.run(query, hash=complaint_hash)
+            for record in result:
+                return record["complaint_id"]
+        return None
 
     def register_complaint(self, complaint_text: str, complaint_id: str):
         """
-        Registers a new complaint.
+        No-op, as actual registration is done via graph_builder.py
         """
-        complaint_hash = hashlib.md5(complaint_text.encode('utf-8')).hexdigest()
-        self.seen_hashes[complaint_hash] = complaint_id
+        pass
 
 deduplicator = Deduplicator()
 

@@ -5,12 +5,13 @@ class GraphBuilder:
     def __init__(self):
         self.driver = get_driver()
 
-    def build_complaint_graph(self, complaint_id: str, entities: ExtractedEntities):
+    def build_complaint_graph(self, complaint_id: str, entities: ExtractedEntities, text: str = "", amount: float = 0.0, hash_val: str = ""):
         """
         Takes extracted entities and builds the corresponding nodes and relationships in Neo4j.
         """
         query = """
         MERGE (c:Complaint {id: $complaint_id})
+        SET c.text = $text, c.amount = $amount, c.hash = $hash_val
         
         FOREACH (ignoreMe IN CASE WHEN $phone IS NOT NULL THEN [1] ELSE [] END |
             MERGE (p:Phone {number: $phone})
@@ -58,7 +59,10 @@ class GraphBuilder:
             "upi": entities.upi,
             "bank": entities.bank,
             "website": entities.website,
-            "scam_type": entities.scam_type
+            "scam_type": entities.scam_type,
+            "text": text,
+            "amount": amount,
+            "hash_val": hash_val
         }
         
         with self.driver.session() as session:

@@ -1,28 +1,39 @@
+from database.neo4j_db import get_driver
+
 class FeatureStore:
     def __init__(self):
-        # Mock in-memory feature store. Would be Redis/Postgres.
-        self.features = {}
+        self.driver = get_driver()
 
     def get_entity_features(self, entity_id: str) -> dict:
         """
         Retrieves precalculated features to speed up Risk Engine.
         """
-        return self.features.get(entity_id, {
+        query = """
+        MATCH (n) WHERE (n:Phone AND n.number = $entity_id) 
+                     OR (n:UPI AND n.id = $entity_id)
+                     OR (n:Website AND n.url = $entity_id)
+        MATCH (c:Complaint)-[:HAS_PHONE|HAS_UPI|HAS_WEBSITE]->(n)
+        RETURN count(c) AS total_complaints, sum(c.amount) AS total_loss
+        """
+        with self.driver.session() as session:
+            result = session.run(query, entity_id=entity_id)
+            for record in result:
+                return {
+                    "total_complaints": record["total_complaints"],
+                    "total_victims": record["total_complaints"],
+                    "total_loss": float(record["total_loss"] or 0.0)
+                }
+        return {
             "total_complaints": 0,
             "total_victims": 0,
             "total_loss": 0.0
-        })
+        }
         
     def update_entity_features(self, entity_id: str, new_loss: float):
         """
-        Updates the feature store when a new complaint arrives.
+        No-op since features are calculated dynamically from Neo4j now.
         """
-        if entity_id not in self.features:
-            self.features[entity_id] = {"total_complaints": 0, "total_victims": 0, "total_loss": 0.0}
-            
-        self.features[entity_id]["total_complaints"] += 1
-        self.features[entity_id]["total_victims"] += 1
-        self.features[entity_id]["total_loss"] += new_loss
+        pass
 
 feature_store = FeatureStore()
 

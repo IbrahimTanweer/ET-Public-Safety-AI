@@ -8,10 +8,19 @@ class EvidenceBuilder:
         """
         Compiles all the AI findings, graph screenshots (mocked), and timelines into a court-ready package.
         """
+        formatted_timeline = []
+        for t in timeline:
+            if hasattr(t, "model_dump"):
+                formatted_timeline.append(t.model_dump())
+            elif isinstance(t, dict):
+                formatted_timeline.append(t)
+            else:
+                formatted_timeline.append(str(t))
+                
         return EvidencePackage(
             complaint_id=complaint_id,
-            timeline=[t.model_dump() for t in timeline],
-            graph_snapshot={"nodes": 12, "edges": 15, "screenshot_url": "mock_graph_img.png"},
+            timeline=formatted_timeline,
+            graph_snapshot={"nodes": 5, "edges": 4, "screenshot_url": "mock_graph_img.png"},
             risk_report=risk_report,
             download_url=f"/api/actions/evidence/{complaint_id}/download"
         )

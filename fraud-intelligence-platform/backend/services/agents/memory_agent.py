@@ -1,17 +1,37 @@
+import google.generativeai as genai
+from config import config
 from models.graph import Campaign
 
 class MemoryAgent:
     def __init__(self):
-        # In a real scenario, this would connect to a vector DB or Postgres for memory
+        # Configure Gemini API
+        genai.configure(api_key=config.GEMINI_API_KEY)
+        self.model = genai.GenerativeModel('gemini-3.1-flash-lite')
         self.memory = {}
 
     def summarize_campaign(self, campaign: Campaign) -> str:
         """
         Uses LLM to summarize a campaign and stores it in memory for future reference.
         """
-        summary = f"Campaign '{campaign.name}' targets users with {campaign.summary}. Loss: {campaign.estimated_loss}"
-        self.memory[campaign.campaign_id] = summary
-        return summary
+        prompt = f"""
+        Summarize the following cybercrime campaign for intelligence dispatch.
+        Campaign Name: {campaign.name}
+        Linked Details: {campaign.summary}
+        Total Estimated Financial Loss: {campaign.estimated_loss} INR
+        Number of Victims: {campaign.total_victims}
+        
+        Write a concise, professional executive intelligence briefing summary (2-3 sentences) detailing the scam vector, threat actors' approach, and immediate dispatch warning.
+        """
+        try:
+            response = self.model.generate_content(prompt)
+            summary = response.text.strip()
+            self.memory[campaign.campaign_id] = summary
+            return summary
+        except Exception as e:
+            print(f"MemoryAgent summary failed: {e}")
+            summary = f"Campaign '{campaign.name}' targets users with {campaign.summary}. Loss: {campaign.estimated_loss}"
+            self.memory[campaign.campaign_id] = summary
+            return summary
 
     def recall_similar_campaigns(self, complaint_text: str) -> list:
         """

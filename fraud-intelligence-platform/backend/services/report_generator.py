@@ -1,35 +1,50 @@
-# import google.generativeai as genai
-# from config import config
+import google.generativeai as genai
+from config import config
 
 class ReportGenerator:
     def __init__(self):
-        pass
-        # genai.configure(api_key=config.GEMINI_API_KEY)
-        # self.model = genai.GenerativeModel('gemini-1.5-pro-latest')
+        # Configure Gemini API
+        genai.configure(api_key=config.GEMINI_API_KEY)
+        self.model = genai.GenerativeModel('gemini-3.1-flash-lite')
 
     def generate_investigation_report(self, complaint_id: str, risk_data: dict, graph_data: dict) -> str:
         """
         Uses LLM to produce human-readable investigation summaries and recommendations.
         """
-        # In a real scenario, we would pass the risk data and graph context to Gemini
-        # prompt = f"Generate an investigation report for complaint {complaint_id} with risk {risk_data} and network {graph_data}"
-        # response = self.model.generate_content(prompt)
+        prompt = f"""
+        You are a senior Lead Cybercrime Investigator. Generate a professional, court-ready Investigation Report for Complaint ID: {complaint_id}.
         
-        # Mock Report
-        return f"""
-        INVESTIGATION REPORT for Complaint {complaint_id}
-        ==================================================
-        Risk Score: {risk_data.get('risk_percentage', 'N/A')}
+        Input Context:
+        - Risk Assessment Data: {risk_data}
+        - Fraud Graph Network Overlaps: {graph_data}
         
-        Summary:
-        This complaint is part of a larger fraud ring involving {len(graph_data.get('connected_complaints', []))} related complaints.
-        The primary vectors identified are phone numbers and UPI IDs linked to previous scams.
+        Please format the report cleanly in markdown with the following sections:
+        1. **EXECUTIVE SUMMARY** (Overview of the complaint, the risk rating, and whether it's part of a fraud ring).
+        2. **TECHNICAL FINDINGS & FRAUD GRAPH EVIDENCE** (Detailing the connections, overlaps with other complaints, and any blacklisted identifiers like UPI/Phone numbers found).
+        3. **POLICE ACTION & LEGAL RECOMMENDATIONS** (Actionable steps like freezing accounts, blocking SIMs, IT Act laws/sections under which the crime is punishable).
         
-        Recommendations:
-        - Immediately freeze the associated bank accounts.
-        - Block the identified UPI IDs across the network.
-        - Issue a subpoena for the call logs of the connected phone numbers.
+        Maintain an objective, analytical, and authoritative investigative tone. Do not mention any JSON brackets, template placeholders, or variables.
         """
+        try:
+            response = self.model.generate_content(prompt)
+            return response.text.strip()
+        except Exception as e:
+            print(f"ReportGenerator failed: {e}")
+            # Fallback report
+            return f"""
+INVESTIGATION REPORT for Complaint {complaint_id}
+==================================================
+Risk Score: {risk_data.get('risk_percentage', 'N/A')}
+
+Summary:
+This complaint is part of a larger fraud ring involving {len(graph_data.get('connected_complaints', []))} related complaints.
+The primary vectors identified are phone numbers and UPI IDs linked to previous scams.
+
+Recommendations:
+- Immediately freeze the associated bank accounts.
+- Block the identified UPI IDs across the network.
+- Issue a subpoena for the call logs of the connected phone numbers.
+            """
 
 generator = ReportGenerator()
 
