@@ -1,0 +1,220 @@
+/* ==========================================================================
+   EVIDENCE CENTER — FBI CDE: Clean form, monospace report output
+   ========================================================================== */
+
+.evidence-center {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.evidence-input {
+  background: #FFFFFF;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  padding: 10px var(--space-4);
+  font-family: inherit;
+  font-size: var(--fs-sm);
+  outline: none;
+  transition: border-color var(--duration-fast) var(--ease-out);
+}
+.evidence-input:focus {
+  border-color: var(--accent);
+  border-width: 2px;
+}
+.evidence-input::placeholder {
+  color: var(--text-tertiary);
+}
+
+.evidence-text-area {
+  background: #FAFAFA;
+  padding: var(--space-6);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  line-height: 1.7;
+  color: var(--text-primary);
+}
+
+/* Styling for Markdown Renderer (Web View) */
+.report-content {
+  font-family: var(--font-mono);
+}
+.report-h1 {
+  font-size: 20px;
+  font-weight: bold;
+  text-align: center;
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 12px;
+  margin-bottom: 24px;
+  color: var(--text-primary);
+}
+.report-h3 {
+  font-size: 14px;
+  font-weight: bold;
+  margin-top: 24px;
+  margin-bottom: 12px;
+  background: var(--bg-secondary);
+  padding: 8px 12px;
+  border-left: 4px solid var(--accent);
+  color: var(--text-primary);
+  text-transform: uppercase;
+}
+.report-kv {
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+.report-key {
+  font-weight: bold;
+  width: 180px;
+  display: inline-block;
+  color: var(--text-secondary);
+}
+.report-li {
+  margin-left: 20px;
+  margin-bottom: 8px;
+  font-size: 14px;
+  list-style-type: square;
+}
+.report-p {
+  font-size: 14px;
+  line-height: 1.6;
+}
+.report-hr {
+  border: 0;
+  border-top: 1px dashed var(--border);
+  margin: 24px 0;
+}
+.hidden {
+  display: none;
+}
+
+@media print {
+  body {
+    background: white;
+  }
+  
+  /* Target the specific layouts we want to hide */
+  .fbi-drawer-overlay, .fbi-main-header, .fbi-footer, .fbi-footer-bottom, .no-print, .evidence-center h1:first-child, .card:not(:last-child) {
+    display: none !important;
+  }
+
+  .fbi-app-container, .fbi-page-wrapper, .fbi-page-container {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    background: white !important;
+  }
+
+  .evidence-center {
+    display: block !important;
+    padding: 0;
+  }
+  
+  .evidence-text-area {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+  }
+
+  .report-content {
+    font-family: 'Times New Roman', Times, serif !important;
+    color: black !important;
+    font-size: 12pt;
+  }
+
+  .report-h1 {
+    font-size: 24pt;
+    border-bottom: 3px double black;
+    color: black;
+    text-transform: uppercase;
+    margin-bottom: 30px;
+  }
+
+  .report-h3 {
+    background: transparent !important;
+    border-left: none !important;
+    border-bottom: 1px solid black;
+    color: black;
+    padding-left: 0;
+    font-size: 14pt;
+    margin-top: 30px;
+  }
+  
+  .report-key {
+    color: black !important;
+  }
+  
+  .report-p, .report-li, .report-kv {
+    font-size: 12pt;
+    color: black !important;
+  }
+
+  .hidden {
+    display: block !important;
+  }
+
+  .print-header {
+    text-align: center;
+    margin-bottom: 40px;
+    border-bottom: 2px solid black;
+    padding-bottom: 20px;
+  }
+
+  .print-seal-container {
+    margin-bottom: 15px;
+  }
+
+  .print-logo {
+    width: 80px;
+    height: 80px;
+    filter: grayscale(100%);
+  }
+
+  .print-logo-text {
+    font-size: 26pt;
+    font-weight: bold;
+    letter-spacing: 2px;
+    font-family: 'Times New Roman', Times, serif;
+    color: black;
+  }
+
+  .print-sub {
+    font-size: 12pt;
+    letter-spacing: 1px;
+    color: #333;
+    margin-bottom: 15px;
+  }
+
+  .print-classification {
+    color: black;
+    font-weight: bold;
+    border: 2px solid black;
+    display: inline-block;
+    padding: 6px 16px;
+    font-size: 14pt;
+  }
+
+  .print-footer {
+    text-align: center;
+    font-size: 10pt;
+    color: #000;
+    border-top: 1px solid #000;
+    padding-top: 10px;
+    margin-top: 50px;
+  }
+  
+  /* Ensure the Card styling wrapper loses its border and background for print */
+  .evidence-center .card {
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+  .evidence-center .card-header {
+    display: none !important;
+  }
+}

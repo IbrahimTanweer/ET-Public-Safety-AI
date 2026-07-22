@@ -1,0 +1,202 @@
+.threat-container {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  color: #e5e7eb;
+  background-color: #09090b;
+  min-height: 100vh;
+}
+
+.threat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 1rem;
+}
+
+.threat-header h1 {
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  margin: 0 0 0.25rem 0;
+  color: #f87171;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-transform: uppercase;
+  text-shadow: 2px 0px 0px rgba(239, 68, 68, 0.5), -2px 0px 0px rgba(59, 130, 246, 0.5);
+}
+
+.threat-header p {
+  color: #9ca3af;
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+.threat-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+@media (min-width: 1024px) {
+  .threat-grid { grid-template-columns: 2fr 1fr; }
+}
+
+.threat-card {
+  background-color: #18181b;
+  border: 1px solid #27272a;
+  border-radius: 0.375rem;
+  padding: 1.25rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.threat-card-title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #9ca3af;
+  margin-bottom: 1.25rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-bottom: 1px solid #27272a;
+  padding-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.threat-actor-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.threat-actor-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background-color: #09090b;
+  border: 1px solid #27272a;
+  border-radius: 0.25rem;
+  transition: border-color 0.2s;
+  cursor: pointer;
+}
+.threat-actor-row:hover {
+  border-color: #ef4444;
+}
+
+.ta-info h3 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1rem;
+  color: #fca5a5;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.ta-info p {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+.ta-stats {
+  text-align: right;
+}
+.ta-stats .loss {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #ef4444;
+}
+.ta-stats .cases {
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+.live-feed-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: 600px;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+
+.live-feed-list::-webkit-scrollbar {
+  width: 6px;
+}
+.live-feed-list::-webkit-scrollbar-thumb {
+  background-color: #3f3f46;
+  border-radius: 3px;
+}
+
+.feed-item {
+  display: flex;
+  gap: 1rem;
+  padding: 0.75rem;
+  background-color: #09090b;
+  border-left: 3px solid #3b82f6;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+}
+.feed-item.high {
+  border-left-color: #ef4444;
+}
+.feed-item.medium {
+  border-left-color: #f59e0b;
+}
+
+.feed-time {
+  color: #6b7280;
+  font-family: monospace;
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+.feed-content {
+  flex: 1;
+}
+.feed-content-title {
+  color: #e5e7eb;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+.feed-content-desc {
+  color: #9ca3af;
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.feed-entities {
+  margin-top: 0.5rem;
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.feed-entity {
+  background-color: #27272a;
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
+  font-family: monospace;
+  font-size: 0.65rem;
+  color: #a5b4fc;
+}
+
+.live-shield-icon {
+  animation: radar-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  filter: drop-shadow(0 0 8px rgba(239, 68, 68, 0.6));
+}
+
+@keyframes radar-pulse {
+  0%, 100% {
+    transform: scale(0.9);
+    opacity: 0.7;
+    filter: drop-shadow(0 0 4px rgba(239, 68, 68, 0.4));
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 1;
+    filter: drop-shadow(0 0 16px rgba(239, 68, 68, 1));
+  }
+}

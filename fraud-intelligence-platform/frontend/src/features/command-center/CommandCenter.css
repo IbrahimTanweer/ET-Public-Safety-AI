@@ -1,0 +1,159 @@
+/* ==========================================================================
+   COMMAND CENTER — FBI CDE dashboard: Material cards, purple metrics
+   ========================================================================== */
+
+.command-center {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.cc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+
+.quick-actions {
+  display: flex;
+  gap: var(--space-3);
+  flex-shrink: 0;
+}
+
+/* Stat cards — 4-col grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-4);
+}
+
+.stat-label {
+  font-size: var(--fs-sm);
+  color: var(--text-secondary);
+  font-weight: 400;
+  margin-bottom: var(--space-2);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.stat-value {
+  font-size: 2rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.stat-trend {
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.cc-main-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--space-6);
+}
+
+/* Queue items */
+.queue-item {
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: #FFFFFF;
+  border-left: 3px solid var(--accent);
+  transition: box-shadow var(--duration-fast) var(--ease-out);
+}
+
+.queue-item:hover {
+  box-shadow: var(--shadow-1);
+}
+
+.ai-summary-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.ai-summary-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  font-size: var(--fs-sm);
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+
+/* Threat Feed Item - Clean distinct card style */
+.threat-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: var(--space-4);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: #FFFFFF;
+  box-shadow: var(--shadow-1);
+  transition: transform var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out);
+  margin-bottom: var(--space-3);
+}
+
+.threat-item:last-child {
+  margin-bottom: 0;
+}
+
+.threat-item:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-2);
+}
+
+/* Realistic Status Indicators */
+.threat-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: block;
+  min-width: 10px;
+}
+
+.threat-indicator.critical-dot {
+  background-color: var(--critical);
+  box-shadow: 0 0 8px rgba(211, 47, 47, 0.6);
+  animation: pulse-red 2s infinite;
+}
+
+.threat-indicator.warning-dot {
+  background-color: var(--warning);
+  box-shadow: 0 0 8px rgba(245, 127, 23, 0.6);
+}
+
+@keyframes pulse-red {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(211, 47, 47, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(211, 47, 47, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(211, 47, 47, 0); }
+}
+
+.activity-item {
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--border-light);
+}
+.activity-item:last-child {
+  border-bottom: none;
+}
+
+@media (max-width: 1024px) {
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .cc-main-grid { grid-template-columns: 1fr; }
+  .cc-header { flex-direction: column; }
+  .quick-actions { flex-wrap: wrap; }
+}

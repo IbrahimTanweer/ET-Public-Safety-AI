@@ -22,6 +22,8 @@ class Campaign(BaseModel):
     total_victims: int
     estimated_loss: float
     summary: str
+    risk_score: float = 0.0
+    linked_complaints: List[str] = []
 
 class RiskResponse(BaseModel):
     complaint_id: str

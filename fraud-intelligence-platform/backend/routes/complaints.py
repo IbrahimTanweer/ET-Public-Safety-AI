@@ -12,6 +12,12 @@ import hashlib
 
 router = APIRouter(prefix="/api/complaints", tags=["Complaints"])
 
+@router.get("/")
+async def get_all_complaints():
+    db = get_pg_db()
+    complaints = db.get_all_complaints()
+    return {"complaints": complaints}
+
 @router.post("/", response_model=ComplaintResponse)
 async def upload_complaint(request: ComplaintRequest):
     # 1. Detect Duplicates
@@ -52,6 +58,9 @@ async def upload_complaint(request: ComplaintRequest):
         amount=amount, 
         hash_val=complaint_hash
     )
+    
+    if not builder.validate_graph_creation(complaint_id):
+        raise HTTPException(status_code=500, detail="Graph validation failed. Relationships were not properly created in Neo4j.")
     
     # 6. Save in Relational Database (SQLite)
     db = get_pg_db()
@@ -116,6 +125,14 @@ async def bulk_upload_complaints(request: BulkComplaintRequest):
             amount=amount, 
             hash_val=complaint_hash
         )
+        
+        if not builder.validate_graph_creation(complaint_id):
+            results.append({
+                "complaint": comp_text[:50] + "...",
+                "status": "failed_graph_validation",
+                "complaint_id": complaint_id
+            })
+            continue
         
         # Save SQL entries
         db.insert_complaint(complaint_id, comp_text, amount, entities.scam_type or "Unknown")

@@ -1,0 +1,80 @@
+/* ==========================================================================
+   BUTTON — FBI CDE: Deep purple primary, outlined secondary
+   ========================================================================== */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: 10px 20px;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-radius: var(--radius-sm);
+  outline: none;
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out);
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn:focus-visible {
+  box-shadow: 0 0 0 2px #FFFFFF, 0 0 0 4px var(--accent);
+}
+
+.btn-icon {
+  margin-right: var(--space-1);
+  display: inline-flex;
+}
+.btn-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Primary — filled deep purple */
+.btn-primary {
+  background: var(--accent);
+  color: #FFFFFF;
+  border: none;
+  box-shadow: var(--shadow-1);
+}
+.btn-primary:hover {
+  background: var(--accent-hover);
+  box-shadow: var(--shadow-2);
+}
+
+/* Secondary — outlined purple border */
+.btn-secondary {
+  background: transparent;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+}
+.btn-secondary:hover {
+  background: var(--accent-wash);
+}
+
+/* Ghost */
+.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  border: none;
+}
+.btn-ghost:hover {
+  background: rgba(0, 0, 0, 0.04);
+  color: var(--text-primary);
+}
+
+/* Danger */
+.btn-danger {
+  background: var(--critical);
+  color: #FFFFFF;
+  border: none;
+}
+.btn-danger:hover {
+  background: #C62828;
+}

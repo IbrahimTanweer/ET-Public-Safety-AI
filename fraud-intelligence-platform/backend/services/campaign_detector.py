@@ -19,23 +19,25 @@ class CampaignDetector:
             name=f"Digital Arrest Ring #{campaign_id}",
             total_victims=total_victims,
             estimated_loss=estimated_loss,
-            summary=f"A coordinated group targeting individuals. Linked complaints: {', '.join(complaint_ids)}"
+            summary=f"A coordinated group targeting individuals. Linked complaints: {', '.join(complaint_ids)}",
+            risk_score=min(99.0, (total_victims * 15) + (estimated_loss / 10000)),
+            linked_complaints=complaint_ids
         )
 
     def detect_campaigns(self) -> list[Campaign]:
         """
-        Scans all complaints in the database and groups them into campaigns based on shared entity links.
+        Groups complaints by specific High-Risk Indicators (Phone, UPI) rather than DFS connected components.
+        This provides clearer, entity-focused campaigns (e.g. "The 9123456780 Ring").
         """
         query = """
         MATCH (c:Complaint)
         OPTIONAL MATCH (c)-[:HAS_PHONE]->(p:Phone)
         OPTIONAL MATCH (c)-[:HAS_UPI]->(u:UPI)
-        OPTIONAL MATCH (c)-[:HAS_WEBSITE]->(w:Website)
         RETURN c.id AS complaint_id, c.text AS text, c.amount AS amount,
-               p.number AS phone, u.id AS upi, w.url AS website
+               p.number AS phone, u.id AS upi
         """
         
-        complaint_entities = {}
+        entity_clusters = {}
         complaint_meta = {}
         
         with self.driver.session() as session:
@@ -44,76 +46,51 @@ class CampaignDetector:
                 c_id = record["complaint_id"]
                 if not c_id:
                     continue
-                if c_id not in complaint_entities:
-                    complaint_entities[c_id] = set()
-                    complaint_meta[c_id] = {
-                        "text": record["text"] or "",
-                        "amount": float(record["amount"] or 0.0)
-                    }
                 
-                # Add linked entities
-                for k in ("phone", "upi", "website"):
-                    if record[k]:
-                        complaint_entities[c_id].add(record[k])
+                complaint_meta[c_id] = {
+                    "text": record["text"] or "",
+                    "amount": float(record["amount"] or 0.0)
+                }
+                
+                # Group by strong identifiers
+                for k in ("phone", "upi"):
+                    val = record[k]
+                    if val and str(val).lower() not in ("unknown", "n/a", "none", "null") and str(val).strip() != "":
+                        entity_key = f"{k.upper()}: {val}"
+                        if entity_key not in entity_clusters:
+                            entity_clusters[entity_key] = set()
+                        entity_clusters[entity_key].add(c_id)
                         
-        # Build adjacency list of complaints sharing entities
-        adj = {c_id: set() for c_id in complaint_entities}
-        for c1 in complaint_entities:
-            for c2 in complaint_entities:
-                if c1 != c2:
-                    if complaint_entities[c1].intersection(complaint_entities[c2]):
-                        adj[c1].add(c2)
-                        
-        # Find connected components (DFS)
-        visited = set()
-        components = []
-        for c_id in complaint_entities:
-            if c_id not in visited:
-                comp = []
-                stack = [c_id]
-                while stack:
-                    curr = stack.pop()
-                    if curr not in visited:
-                        visited.add(curr)
-                        comp.append(curr)
-                        for neighbor in adj[curr]:
-                            if neighbor not in visited:
-                                stack.append(neighbor)
-                if len(comp) > 1:
-                    components.append(comp)
-                    
         campaigns = []
-        for idx, comp in enumerate(components):
-            camp_id = f"CAMP-{idx+1:03d}"
-            total_victims = len(comp)
-            estimated_loss = sum(complaint_meta[c_id]["amount"] for c_id in comp)
-            
-            campaigns.append(Campaign(
-                campaign_id=camp_id,
-                name=f"Coordinated Fraud Ring {camp_id}",
-                total_victims=total_victims,
-                estimated_loss=estimated_loss,
-                summary=f"Coordinated campaign linking {total_victims} complaints: {', '.join(comp)}"
-            ))
-            
-        # Fallback to make the dashboard look populated when the database is fresh
-        if not campaigns:
-            campaigns = [
-                Campaign(
-                    campaign_id="CAMP-001",
-                    name="Fake Customs/CBI Call Scam Campaign",
-                    total_victims=3,
-                    estimated_loss=150000.0,
-                    summary="Impersonation of customs/CBI officials threatening victims with fake arrests."
-                ),
-                Campaign(
-                    campaign_id="CAMP-002",
-                    name="Part-Time Job Telegram Scam Campaign",
-                    total_victims=2,
-                    estimated_loss=80000.0,
-                    summary="Luring victims with high return part-time tasks on Telegram and UPI links."
-                )
-            ]
+        idx = 1
+        for entity_key, comp_set in entity_clusters.items():
+            comp = list(comp_set)
+            # Only create a campaign if multiple complaints share the entity
+            if len(comp) > 1:
+                camp_id = f"CAMP-{idx:03d}"
+                idx += 1
+                total_victims = len(comp)
+                estimated_loss = sum(complaint_meta[c_id]["amount"] for c_id in comp)
+                
+                if total_victims > 5:
+                    risk_score = 98.0
+                elif total_victims > 1:
+                    risk_score = 75.0
+                else:
+                    risk_score = 25.0
+                
+                campaigns.append(Campaign(
+                    campaign_id=camp_id,
+                    name=f"Fraud Ring via {entity_key}",
+                    total_victims=total_victims,
+                    estimated_loss=estimated_loss,
+                    summary=f"Coordinated campaign pivoting on {entity_key}. Linked {total_victims} complaints: {', '.join(comp)}",
+                    risk_score=risk_score,
+                    linked_complaints=comp
+                ))
+                
+        # Sort by victims so largest campaigns show first
+        campaigns.sort(key=lambda x: x.total_victims, reverse=True)
             
         return campaigns
 

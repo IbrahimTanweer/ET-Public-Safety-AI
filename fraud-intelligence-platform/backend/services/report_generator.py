@@ -1,11 +1,11 @@
-import google.generativeai as genai
+from google import genai
 from config import config
 
 class ReportGenerator:
     def __init__(self):
-        # Configure Gemini API
-        genai.configure(api_key=config.GEMINI_API_KEY)
-        self.model = genai.GenerativeModel('gemini-3.1-flash-lite')
+        # Configure Gemini API with new SDK
+        self.client = genai.Client(api_key=config.GEMINI_API_KEY)
+        self.model_name = 'gemini-3.1-flash-lite'
 
     def generate_investigation_report(self, complaint_id: str, risk_data: dict, graph_data: dict) -> str:
         """
@@ -26,7 +26,10 @@ class ReportGenerator:
         Maintain an objective, analytical, and authoritative investigative tone. Do not mention any JSON brackets, template placeholders, or variables.
         """
         try:
-            response = self.model.generate_content(prompt)
+            response = self.client.models.generate_content(
+                model=self.model_name,
+                contents=prompt
+            )
             return response.text.strip()
         except Exception as e:
             print(f"ReportGenerator failed: {e}")

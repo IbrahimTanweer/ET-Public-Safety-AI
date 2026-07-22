@@ -188,6 +188,13 @@ class MockSession:
                 
             return MockResult([{"network_profile": network_profile}])
 
+        # 10. Graph validation
+        if "RETURN count(c) as complaint_count, count(r) as rel_count" in query:
+            c_id = p.get("complaint_id") or kwargs.get("complaint_id")
+            if c_id in db_store.complaints:
+                return MockResult([{"complaint_count": 1, "rel_count": 3}])
+            return MockResult([{"complaint_count": 0, "rel_count": 0}])
+
         return MockResult([])
 
 class MockDriver:
@@ -196,13 +203,13 @@ class MockDriver:
     def close(self):
         pass
 
-# Check if Neo4j configuration is provided
 if config.NEO4J_URI:
     try:
         driver = GraphDatabase.driver(
             config.NEO4J_URI,
             auth=(config.NEO4J_USERNAME, config.NEO4J_PASSWORD)
         )
+        driver.verify_connectivity()
     except Exception as e:
         print(f"Failed to initialize Neo4j driver: {e}. Using mock Neo4j driver.")
         driver = MockDriver()

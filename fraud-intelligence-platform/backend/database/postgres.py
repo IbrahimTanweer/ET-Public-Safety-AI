@@ -101,6 +101,15 @@ class RelationalDB:
             return dict(row)
         return None
 
+    def get_all_complaints(self) -> list[dict]:
+        conn = sqlite3.connect(self.db_path)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM complaints ORDER BY created_at DESC")
+        rows = cursor.fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
     def get_timeline(self, complaint_id: str) -> list[dict]:
         conn = sqlite3.connect(self.db_path)
         conn.row_factory = sqlite3.Row
@@ -129,6 +138,20 @@ class RelationalDB:
             "total_loss": float(total_loss or 0.0),
             "scam_types": scam_types
         }
+
+    def get_recent_feed(self, limit: int = 5) -> dict:
+        conn = sqlite3.connect(self.db_path)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        cursor.execute("SELECT * FROM timeline_events ORDER BY id DESC LIMIT ?", (limit,))
+        timeline = [dict(r) for r in cursor.fetchall()]
+        
+        cursor.execute("SELECT * FROM audit_logs ORDER BY id DESC LIMIT ?", (limit,))
+        audit = [dict(r) for r in cursor.fetchall()]
+        
+        conn.close()
+        return {"timeline": timeline, "audit": audit}
 
     def clear_db(self):
         conn = sqlite3.connect(self.db_path)

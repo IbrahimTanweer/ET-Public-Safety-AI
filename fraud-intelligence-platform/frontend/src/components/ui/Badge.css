@@ -1,0 +1,41 @@
+/* ==========================================================================
+   BADGE — Material-style soft fills on light backgrounds
+   ========================================================================== */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.badge-default {
+  background: rgba(0, 0, 0, 0.08);
+  color: var(--text-primary);
+}
+
+.badge-success {
+  background: var(--success-wash);
+  color: var(--success);
+}
+
+.badge-warning {
+  background: var(--warning-wash);
+  color: var(--warning);
+}
+
+.badge-critical {
+  background: var(--critical-wash);
+  color: var(--critical);
+}
+
+.badge-accent {
+  background: var(--accent-wash);
+  color: var(--accent);
+}

@@ -1,90 +1,127 @@
 from database.neo4j_db import get_driver
 
+
 class GraphAnalyzer:
     def __init__(self):
         self.driver = get_driver()
 
     def find_connected_complaints(self, phone: str) -> dict:
         """
-        Finds all complaints connected to a given phone number and builds the graph network.
+        Builds the fraud network for a phone number.
         """
+
         query = """
-        MATCH (p:Phone {number: $phone})<-[:HAS_PHONE]-(c:Complaint)
+        MATCH (c:Complaint)-[]->(n)
+        WHERE n.number = $phone OR n.id = $phone OR n.url = $phone OR n.name = $phone
         OPTIONAL MATCH (c)-[r]->(other)
-        RETURN c.id AS comp_id, c.text AS comp_text, c.amount AS comp_amount,
-               type(r) AS rel_type,
-               labels(other)[0] AS other_label,
-               other.number AS phone_num, other.id AS upi_id, other.url AS web_url, other.name AS other_name
+        RETURN c, r, other
         """
-        
-        nodes_dict = {}
-        edges_set = set()
-        connected_complaints = set()
-        
-        # Add the queried phone node itself
-        nodes_dict[phone] = {
-            "id": phone,
-            "label": "Phone",
-            "properties": {"number": phone}
-        }
-        
+
+        nodes = {}
+        edges = set()
+        complaints = set()
+
         with self.driver.session() as session:
+
             result = session.run(query, phone=phone)
-            for record in result:
-                comp_id = record.get("comp_id")
-                if not comp_id:
+            records = list(result)
+
+            print(f"Searching phone: {phone}")
+            print(f"Records returned: {len(records)}")
+
+            for record in records:
+
+                complaint = record["c"]
+                relation = record["r"]
+                other = record["other"]
+
+                if complaint is None:
                     continue
-                    
-                connected_complaints.add(comp_id)
-                
-                # Add Complaint Node
-                if comp_id not in nodes_dict:
-                    nodes_dict[comp_id] = {
+
+                comp_id = complaint["id"]
+                complaints.add(comp_id)
+
+                if comp_id not in nodes:
+                    nodes[comp_id] = {
                         "id": comp_id,
                         "label": "Complaint",
-                        "properties": {
-                            "text": record.get("comp_text") or "",
-                            "amount": float(record.get("comp_amount") or 0.0)
-                        }
+                        "properties": dict(complaint)
                     }
-                
-                # Add relation between complaint and queried phone
-                edges_set.add((comp_id, phone, "HAS_PHONE"))
-                
-                # Add other linked entities
-                other_label = record.get("other_label")
-                if other_label:
-                    other_val = None
-                    if other_label == "Phone":
-                        other_val = record.get("phone_num")
-                    elif other_label == "UPI":
-                        other_val = record.get("upi_id")
-                    elif other_label == "Website":
-                        other_val = record.get("web_url")
-                    elif other_label in ("Bank", "ScamType", "District", "Officer", "Status"):
-                        other_val = record.get("other_name")
-                        
-                    if other_val:
-                        if other_val not in nodes_dict:
-                            nodes_dict[other_val] = {
-                                "id": other_val,
-                                "label": other_label,
-                                "properties": {"name": other_val}
+
+                # Complaint -> Phone edge
+                phone_number = None
+
+                if "phone" in complaint:
+                    phone_number = complaint["phone"]
+
+                elif other is not None and "number" in other:
+                    phone_number = other["number"]
+
+                if phone_number:
+                    if phone_number not in nodes:
+                        nodes[phone_number] = {
+                            "id": phone_number,
+                            "label": "Phone",
+                            "properties": {
+                                "number": phone_number
                             }
-                        rel_type = record.get("rel_type") or "LINKS_TO"
-                        edges_set.add((comp_id, other_val, rel_type))
-                        
-        nodes = list(nodes_dict.values())
-        edges = [{"source_id": e[0], "target_id": e[1], "relationship_type": e[2]} for e in edges_set]
-        
+                        }
+
+                    edges.add(
+                        (
+                            comp_id,
+                            phone_number,
+                            "HAS_PHONE"
+                        )
+                    )
+
+                if other is None or relation is None:
+                    continue
+
+                label = list(other.labels)[0]
+                props = dict(other)
+
+                node_id = (
+                    props.get("number")
+                    or props.get("id")
+                    or props.get("url")
+                    or props.get("name")
+                )
+
+                if node_id is None:
+                    continue
+
+                if node_id not in nodes:
+                    nodes[node_id] = {
+                        "id": str(node_id),
+                        "label": label,
+                        "properties": props
+                    }
+
+                edges.add(
+                    (
+                        comp_id,
+                        str(node_id),
+                        relation.type
+                    )
+                )
+
         return {
-            "nodes": nodes,
-            "edges": edges,
-            "total_complaints": len(connected_complaints),
-            "connected_complaints": list(connected_complaints)
+            "nodes": list(nodes.values()),
+            "edges": [
+                {
+                    "source_id": s,
+                    "target_id": t,
+                    "relationship_type": r
+                }
+                for s, t, r in edges
+            ],
+            "total_complaints": len(complaints)
         }
 
+
 analyzer = GraphAnalyzer()
+
 
 def get_graph_analyzer():
     return analyzer

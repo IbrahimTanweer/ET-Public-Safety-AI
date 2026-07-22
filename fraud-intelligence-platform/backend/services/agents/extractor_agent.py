@@ -1,14 +1,15 @@
 import json
 from datetime import datetime
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from config import config
 from models.complaint import ExtractedEntities, TimelineEvent, AuditLog
 
 class ExtractorAgent:
     def __init__(self):
-        # Configure Gemini API
-        genai.configure(api_key=config.GEMINI_API_KEY)
-        self.model = genai.GenerativeModel('gemini-3.1-flash-lite', generation_config={"response_mime_type": "application/json"})
+        # Configure Gemini API with new SDK
+        self.client = genai.Client(api_key=config.GEMINI_API_KEY)
+        self.model_name = 'gemini-3.1-flash-lite'
 
     def extract_and_audit(self, complaint_text: str) -> tuple[ExtractedEntities, list[TimelineEvent], list[AuditLog]]:
         """
@@ -39,7 +40,11 @@ class ExtractorAgent:
         """
         
         try:
-            response = self.model.generate_content(prompt)
+            response = self.client.models.generate_content(
+                model=self.model_name,
+                contents=prompt,
+                config=types.GenerateContentConfig(response_mime_type="application/json")
+            )
             clean_text = response.text.strip().removeprefix('```json').removesuffix('```').strip()
             data = json.loads(clean_text)
             

@@ -1,0 +1,100 @@
+/* ==========================================================================
+   CASE INTAKE — FBI CDE: Clean form fields, purple focus, 3-col layout
+   ========================================================================== */
+
+.case-intake {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.intake-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.5fr;
+  gap: var(--space-6);
+  flex: 1;
+  min-height: 500px;
+}
+
+.complaint-input {
+  width: 100%;
+  flex: 1;
+  background: #FFFFFF;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  padding: var(--space-4);
+  font-family: inherit;
+  font-size: var(--fs-sm);
+  resize: none;
+  outline: none;
+  line-height: 1.6;
+  transition: border-color var(--duration-fast) var(--ease-out);
+}
+.complaint-input:focus {
+  border-color: var(--accent);
+  border-width: 2px;
+}
+.complaint-input::placeholder {
+  color: var(--text-tertiary);
+}
+
+.entity-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--border-light);
+}
+.entity-row:last-child { border-bottom: none; }
+
+.entity-label {
+  color: var(--text-secondary);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.entity-value {
+  color: var(--text-primary);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  font-family: var(--font-mono);
+}
+
+.audit-log-item {
+  background: #FAFAFA;
+  border: 1px solid var(--border-light);
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+}
+
+.timeline-container {
+  border-left: 2px solid var(--accent);
+  margin-left: var(--space-2);
+  padding-left: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.timeline-item { position: relative; }
+
+.timeline-dot {
+  position: absolute;
+  left: calc(var(--space-4) * -1 - 7px);
+  top: 4px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid #FFFFFF;
+}
+
+@media (max-width: 1024px) {
+  .intake-grid {
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+}

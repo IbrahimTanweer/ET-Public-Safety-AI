@@ -76,6 +76,11 @@ class RiskEngine:
                 blacklist_score += 30.0 * weight
                 factors.append(f"Threat Intelligence Match: {e_type} blacklisted via {item['threat_source']}")
 
+        if connected_complaints and len(connected_complaints) > 0:
+            network_size = len(connected_complaints)
+            weighted_overlap_score += math.log1p(network_size) * 10.0
+            factors.append(f"Identified as part of a {network_size}-node interconnected fraud ring.")
+
         # 3. Combine risk variables using a bounded logistic function or max caps
         # Caps prevent minor overlaps from blowing past logical boundaries
         capped_overlap = min(weighted_overlap_score, 55.0)

@@ -26,6 +26,11 @@ async def import_feed(request: ThreatFeedRequest):
     intel.import_threat_feed(feed)
     return {"message": f"Successfully imported {len(feed)} threat indicators into Neo4j."}
 
+@router.get("/feed")
+async def get_feed():
+    db = get_pg_db()
+    return db.get_recent_feed()
+
 @router.post("/reset")
 async def reset_databases():
     # 1. Clear Relational SQLite db
@@ -80,5 +85,28 @@ async def get_evidence(complaint_id: str):
         }
     ] 
     
-    package = builder.build_package(complaint_id, risk, timeline)
+    # Fetch phone number connected to this complaint
+    query = """
+    MATCH (c:Complaint {id: $complaint_id})-[:HAS_PHONE]->(p:Phone)
+    RETURN p.number AS phone
+    """
+    phone = None
+    try:
+        driver = get_driver()
+        with driver.session() as session:
+            result = session.run(query, complaint_id=complaint_id)
+            for record in result:
+                phone = record["phone"]
+                break
+    except Exception as e:
+        print(f"Failed to fetch phone number for evidence {complaint_id}: {e}")
+
+    from services.graph_analyzer import get_graph_analyzer
+    analyzer = get_graph_analyzer()
+    if phone:
+        network_data = analyzer.find_connected_complaints(phone)
+    else:
+        network_data = {"nodes": [], "edges": [], "total_complaints": 0, "connected_complaints": []}
+        
+    package = builder.build_package(complaint_id, risk, timeline, network_data)
     return package

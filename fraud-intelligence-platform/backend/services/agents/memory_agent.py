@@ -1,12 +1,12 @@
-import google.generativeai as genai
+from google import genai
 from config import config
 from models.graph import Campaign
 
 class MemoryAgent:
     def __init__(self):
-        # Configure Gemini API
-        genai.configure(api_key=config.GEMINI_API_KEY)
-        self.model = genai.GenerativeModel('gemini-3.1-flash-lite')
+        # Configure Gemini API with new SDK
+        self.client = genai.Client(api_key=config.GEMINI_API_KEY)
+        self.model_name = 'gemini-3.1-flash-lite'
         self.memory = {}
 
     def summarize_campaign(self, campaign: Campaign) -> str:
@@ -23,7 +23,10 @@ class MemoryAgent:
         Write a concise, professional executive intelligence briefing summary (2-3 sentences) detailing the scam vector, threat actors' approach, and immediate dispatch warning.
         """
         try:
-            response = self.model.generate_content(prompt)
+            response = self.client.models.generate_content(
+                model=self.model_name,
+                contents=prompt
+            )
             summary = response.text.strip()
             self.memory[campaign.campaign_id] = summary
             return summary

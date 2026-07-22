@@ -1,0 +1,491 @@
+/* ==========================================================================
+   FBI WEBSITE LAYOUT STYLE (Top centered header, sliding left drawer, footer)
+   ========================================================================== */
+
+.fbi-app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+/* 1. Sliding Left Drawer Menu (FBI style black panel) */
+.fbi-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 100;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--duration-base) var(--ease-out),
+    visibility var(--duration-base) var(--ease-out);
+}
+
+.fbi-drawer-overlay.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+.fbi-drawer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 300px;
+  height: 100vh;
+  background-color: #0B0A10; /* Dark black/violet */
+  color: #FFFFFF;
+  box-shadow: var(--shadow-8);
+  display: flex;
+  flex-direction: column;
+  transform: translateX(-100%);
+  transition: transform var(--duration-base) var(--ease-out);
+}
+
+.fbi-drawer-overlay.show .fbi-drawer {
+  transform: translateX(0);
+}
+
+.drawer-header {
+  padding: var(--space-4) var(--space-6);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.drawer-header h2 {
+  color: #FFFFFF;
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.close-btn {
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color var(--duration-fast);
+}
+
+.close-btn:hover {
+  color: #FFFFFF;
+}
+
+/* Drawer Search */
+.drawer-search {
+  padding: var(--space-4) var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.drawer-search-input input {
+  width: 100%;
+  height: 38px;
+  padding: 0 var(--space-3);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-sm);
+  color: #FFFFFF;
+  font-size: var(--fs-sm);
+  outline: none;
+}
+
+.drawer-search-btn {
+  width: 100%;
+  height: 34px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #FFFFFF;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  cursor: pointer;
+  transition: background var(--duration-fast);
+}
+
+.drawer-search-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* Drawer Socials */
+.drawer-socials {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-6);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.drawer-socials svg {
+  cursor: pointer;
+  transition: color var(--duration-fast);
+}
+
+.drawer-socials svg:hover {
+  color: var(--gold);
+}
+
+/* Drawer Navigation items */
+.drawer-nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-4) 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.drawer-nav-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-6);
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 14px;
+  font-weight: 500;
+  transition: all var(--duration-fast);
+}
+
+.drawer-nav-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #FFFFFF;
+}
+
+.drawer-nav-item.active {
+  color: var(--gold);
+  font-weight: 600;
+  background: rgba(103, 58, 183, 0.15);
+}
+
+.drawer-icon {
+  display: flex;
+  color: inherit;
+}
+
+/* 2. Main Centered Header Banner */
+.fbi-main-header {
+  background-color: #0F0E14; /* Pure black / dark charcoal */
+  color: #FFFFFF;
+  padding: var(--space-4) var(--space-6);
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  border-bottom: 3px solid var(--gold);
+  box-shadow: var(--shadow-1);
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+}
+
+.menu-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: #FFFFFF;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  padding: 8px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.05);
+  transition: background var(--duration-fast);
+}
+
+.menu-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* Centered SIB Badge */
+.header-center {
+  display: flex;
+  justify-content: center;
+}
+
+.fbi-logo-block {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  text-align: left;
+}
+
+.fbi-logo-img {
+  width: 90px;
+  height: 90px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 16px rgba(255, 215, 64, 0.25));
+  border: 2px solid var(--gold);
+  border-radius: 50%;
+  padding: 2px;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.fbi-title-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.fbi-title-main {
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #FFFFFF;
+  line-height: 1.2;
+}
+
+.fbi-title-sub {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--gold);
+  line-height: 1.2;
+  margin-top: 2px;
+}
+
+/* Right Side: Search and Toggles */
+.header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-2);
+}
+
+.fbi-search-bar {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: var(--radius-sm);
+  padding: 0 var(--space-3);
+  height: 36px;
+  width: 260px;
+}
+
+.fbi-search-bar input {
+  background: none;
+  border: none;
+  color: #FFFFFF;
+  outline: none;
+  font-size: var(--fs-sm);
+  flex: 1;
+}
+
+.fbi-search-bar input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.fbi-search-bar .search-icon {
+  color: var(--gold);
+  cursor: pointer;
+}
+
+.header-toggles {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.mode-toggle-btn {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-sm);
+  padding: 4px 10px;
+  cursor: pointer;
+  background: transparent;
+  transition: all var(--duration-fast);
+}
+
+.mode-toggle-btn.active {
+  background: var(--accent);
+  color: #FFFFFF;
+  border-color: var(--accent);
+}
+
+.mode-toggle-btn.ir-btn.active {
+  background: var(--critical);
+  border-color: var(--critical);
+}
+
+/* 3. Page Content Wrapper */
+.fbi-page-wrapper {
+  flex: 1;
+  overflow-y: auto;
+  background-color: var(--bg-primary);
+}
+
+.fbi-page-container {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-6);
+}
+
+/* 4. SIB / FBI Style Enhanced Footer */
+.fbi-footer {
+  background-color: #1A191F; /* Dark gray background */
+  color: #FFFFFF;
+  border-top: 4px solid var(--accent);
+  padding: var(--space-8) var(--space-6) var(--space-6);
+}
+
+.fbi-footer-grid {
+  max-width: 1440px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-8);
+  padding-bottom: var(--space-8);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.footer-column h3 {
+  font-size: var(--fs-md);
+  font-weight: 700;
+  color: #FFFFFF;
+  margin-top: 0;
+  margin-bottom: var(--space-4);
+  text-transform: none;
+  letter-spacing: normal;
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.footer-column .sub-header {
+  margin-top: var(--space-6);
+}
+
+.footer-column ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.footer-column ul li a {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 13px;
+  font-weight: 500;
+  transition: color var(--duration-fast);
+}
+
+.footer-column ul li a:hover {
+  color: #FFFFFF;
+  text-decoration: underline;
+}
+
+/* Footer Bottom Bar */
+.fbi-footer-bottom {
+  max-width: 1440px;
+  margin: var(--space-6) auto 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.footer-bottom-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.footer-seal-small {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+}
+
+.footer-seal-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.footer-agency {
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: #FFFFFF;
+}
+
+.footer-division {
+  font-size: 10px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 0.05em;
+}
+
+.footer-bottom-right {
+  display: flex;
+  align-items: center;
+}
+
+.footer-socials-row {
+  display: flex;
+  gap: var(--space-4);
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.footer-socials-row svg {
+  cursor: pointer;
+  transition: color var(--duration-fast);
+}
+
+.footer-socials-row svg:hover {
+  color: var(--gold);
+}
+
+/* Mobile responsive menu overrides */
+@media (max-width: 1024px) {
+  .fbi-main-header {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+    text-align: center;
+  }
+  
+  .header-left, .header-center, .header-right {
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .fbi-logo-block {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .fbi-footer-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-6);
+  }
+  
+  .fbi-footer-bottom {
+    flex-direction: column;
+    text-align: center;
+    align-items: center;
+  }
+}
+
+@media (max-width: 600px) {
+  .fbi-footer-grid {
+    grid-template-columns: 1fr;
+  }
+}
